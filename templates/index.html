@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语动态学习网 | AI 助教</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Georgia&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 全局风格 --- */
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Roboto', "Microsoft YaHei", sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex: 1; /* 让内容撑开，保证页脚在底部 */
+        }
+
+        /* --- 导航栏 --- */
+        .navbar {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* --- 卡片容器 --- */
+        .study-card {
+            border: none;
+            border-radius: 15px;
+            background: #fff;
+            margin-bottom: 40px;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+        .study-card:hover {
+            transform: translateY(-2px); /* 悬停微动 */
+        }
+
+        /* --- 1. 英文原文区 (仿书本风格) --- */
+        .english-section {
+            background-color: #fff;
+            border-left: 6px solid #3498db; /* 蓝色书脊 */
+            padding: 25px 30px;
+            font-family: 'Georgia', serif; /* 衬线体，适合阅读 */
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #2c3e50;
+            white-space: pre-wrap;
+        }
+
+        /* --- 2. 中文翻译区 --- */
+        .translation-section {
+            background-color: #fcfcfc;
+            border-left: 6px solid #2ecc71; /* 绿色书脊 */
+            padding: 20px 30px;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #555;
+            position: relative;
+            border-top: 1px dashed #eee;
+        }
+
+        /* 来源小标签 */
+        .source-badge {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background-color: #edf2f7;
+            color: #718096;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        /* --- 3. 语法胶囊 --- */
+        .grammar-tag {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-right: 8px;
+            margin-bottom: 5px;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .bg-subject { background-color: #4facfe; background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%); }
+        .bg-verb    { background-color: #ff0844; background-image: linear-gradient(to right, #ff0844 0%, #ffb199 100%); }
+        .bg-object  { background-color: #43e97b; background-image: linear-gradient(to right, #43e97b 0%, #38f9d7 100%); }
+
+        /* --- 页脚 --- */
+        footer {
+            background-color: #2d3436;
+            color: #b2bec3;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-top: auto;
+        }
+
+        /* 打印优化 */
+        @media print {
+            .navbar, audio, .accordion-button, footer { display: none !important; }
+            .accordion-collapse { display: block !important; }
+            .study-card { break-inside: avoid; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark mb-5">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                📚 英语动态学习网 <span class="badge bg-warning text-dark" style="font-size: 0.5em; vertical-align: top;">Pro</span>
+            </a>
+            <a href="/admin" class="btn btn-outline-light btn-sm rounded-pill px-4">我是管理员</a>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        {% for item in dialogues %}
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-sm study-card">
+                    
+                    <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                        <h5 class="m-0 fw-bold text-secondary">📄 {{ item.filename }}</h5>
+                        <span class="text-muted small">Lesson {{ loop.revindex }}</span>
+                    </div>
+
+                    <div class="card-body p-0">
+                        <div class="english-section">
+                            {{ item.text }}
+                        </div>
+
+                        {% if item.analysis.get('translation') %}
+                        <div class="translation-section">
+                            {% if item.translator %}
+                            <span class="source-badge">Via {{ item.translator }}</span>
+                            {% endif %}
+                            <strong>中文译文：</strong><br>
+                            {{ item.analysis.translation }}
+                        </div>
+                        {% endif %}
+
+                        <div class="px-4 py-3 bg-light border-top border-bottom">
+                            <div class="d-flex align-items-center">
+                                <span class="fs-5 me-3">🎧</span>
+                                <audio controls src="{{ item.audio }}" class="w-100" style="height: 36px;"></audio>
+                            </div>
+                        </div>
+
+                        <div class="accordion accordion-flush" id="acc_{{ loop.index }}">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed bg-white py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_{{ loop.index }}">
+                                        ✨ <strong>点击查看：核心语法结构分析</strong>
+                                    </button>
+                                </h2>
+                                <div id="collapse_{{ loop.index }}" class="accordion-collapse collapse">
+                                    <div class="accordion-body bg-light">
+                                        {% if item.analysis and item.analysis.get('structure') %}
+                                            <div class="mb-2 text-muted small">第一句核心成分拆解：</div>
+                                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                                {% if item.analysis.structure.subject %}
+                                                <span class="grammar-tag bg-subject">主语: {{ item.analysis.structure.subject }}</span>
+                                                {% endif %}
+                                                
+                                                {% if item.analysis.structure.verb %}
+                                                <span class="grammar-tag bg-verb">谓语: {{ item.analysis.structure.verb }}</span>
+                                                {% endif %}
+                                                
+                                                {% if item.analysis.structure.object %}
+                                                <span class="grammar-tag bg-object">宾语: {{ item.analysis.structure.object }}</span>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <p class="text-muted small mb-0">暂无语法数据。</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <footer>
+        <div class="container">
+            <p class="mb-0">&copy; 2025 AI English Learning Platform. Built with Flask & Gemini.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

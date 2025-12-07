@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>后台管理 - 课件上传</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow border-0">
+                    
+                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center py-3">
+                        <h5 class="m-0">📄 PDF + 🎧 音频上传</h5>
+                        <a href="/logout" class="btn btn-sm btn-light text-danger fw-bold">🔓 退出登录</a>
+                    </div>
+
+                    <div class="card-body p-4">
+                        {% with messages = get_flashed_messages() %}
+                          {% if messages %}
+                            <div class="alert alert-success shadow-sm">{{ messages[0] }}</div>
+                          {% endif %}
+                        {% endwith %}
+
+                        <form method="POST" enctype="multipart/form-data">
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-secondary">1. 课文 PDF 文件</label>
+                                <input type="file" name="pdf_file" class="form-control" accept=".pdf" required>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-secondary">2. 配套音频 (MP3)</label>
+                                <input type="file" name="audio_file" class="form-control" accept=".mp3, .wav" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-secondary">3. 选择翻译引擎</label>
+                                <select name="trans_source" class="form-select border-danger">
+                                    <option value="google_free" selected>🌍 Google 免费翻译 (推荐)</option>
+                                    <option value="deepl">🟣 DeepL (需要Key)</option>
+                                    <option value="baidu">🔵 百度翻译 (需要Key)</option>
+                                    <option value="gemini">✨ Gemini AI (仅分析)</option>
+                                </select>
+                                <div class="form-text">如果没有配置对应的 Key，请选择 Google 免费版。</div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <button type="submit" class="btn btn-danger w-100 py-2 fw-bold shadow-sm">
+                                🚀 开始上传并处理
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="card-footer text-center bg-white py-3 border-0">
+                        <a href="/" class="text-decoration-none text-secondary">⬅️ 返回前台学习页</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
