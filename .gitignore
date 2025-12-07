@@ -13,4 +13,7 @@ __pycache__/
 
 # 虚拟环境
 .venv/
-venv/
+venv/.env
+__pycache__/
+my_database.db
+static/uploads/
