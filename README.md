@@ -34,50 +34,30 @@
 git clone [https://github.com/你的用户名/english-app.git](https://github.com/你的用户名/english-app.git)
 cd english-app
 
-2. 安装依赖
-Bash
+# ==========================================================
+# 步骤 1: 准备工作 (在你的 WSL/本地终端执行)
+# ==========================================================
 
+# 确保进入项目文件夹 (如果刚克隆项目)
+cd english-app
+
+# 安装所有依赖 (用于本地运行和开发环境)
 pip install -r requirements.txt
-3. 配置环境变量
-在项目根目录创建一个 .env 文件，填入你的密钥：
 
-代码段
+# 首次运行程序，自动创建数据库文件 (my_database.db)
+# 看到 "Running on..." 后按 Ctrl+C 停止
+python app.py 
 
-GEMINI_API_KEY=你的_Google_Gemini_Key
-ADMIN_PASSWORD=123456
-FLASK_SECRET_KEY=随便写一个复杂的字符串
-4. 运行
-Bash
+# ==========================================================
+# 步骤 2: 部署到 PythonAnywhere (在 PA 的 Bash 控制台中执行)
+# ==========================================================
 
-python app.py
-访问 http://127.0.0.1:5000 即可使用。
-
-☁️ 部署指南 (PythonAnywhere)
-本项目已针对 PythonAnywhere 部署进行路径优化。
-
-1. 上传代码
-在 PythonAnywhere 的 Bash 控制台中克隆代码：
-
-Bash
-
-git clone [https://github.com/你的用户名/english-app.git](https://github.com/你的用户名/english-app.git)
-2. 安装依赖
-在项目文件夹内执行：
-
-Bash
-
-# 请根据你的 Web App 版本选择 pip (如 pip3.10)
+# 1. 再次安装依赖 (安装到 PA 的特定 Python 版本)
+# ⚠️ 注意: 请将 X 替换为你的 Web App Python 版本，例如 pip3.10
 pip3.X install -r requirements.txt --user
-3. 配置环境变量
-在服务器上创建 .env 文件（和 app.py 同一级），并填入密钥。
 
-4. 配置 WSGI 路径
-在 Web 选项卡中，修改 WSGI 配置文件，将路径指向项目文件夹：
+# 2. 数据库初始化 (如果网站报 no such table 错误，运行此命令)
+# 强制让服务器运行建表函数
+python3 -c "from app import init_db; init_db()"
 
-Python
-
-# 确保路径指向 /home/你的用户名/english-app
-path = '/home/你的用户名/english-app' 
-# ... (其他代码保持不变) ...
-5. 数据库初始化
-如果遇到 no such table 错误，请在浏览器中访问以下路由进行自动修复： 访问网址： https://你的域名.pythonanywhere.com/fix-db
+# 3. [下一步操作] 完成后，请去 PythonAnywhere 的 Web 标签页点击 "Reload"。
