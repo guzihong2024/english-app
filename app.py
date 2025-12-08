@@ -49,8 +49,8 @@ if not API_KEY:
 else:
     genai.configure(api_key=API_KEY)
     try:
-        # ⚠️ 修正：目前稳定版是 1.5-flash
-        model = genai.GenerativeModel('gemini-1.5-flash', generation_config={"response_mime_type": "application/json"})
+        # ⚠️ 修正：目前稳定版是 2.5-flash
+        model = genai.GenerativeModel('gemini-2.5-flash', generation_config={"response_mime_type": "application/json"})
     except Exception as e:
         print(f"⚠️ 模型加载警告: {e}")
         model = None
