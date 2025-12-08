@@ -130,8 +130,16 @@
                 <div class="card shadow-sm study-card">
                     
                     <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-                        <h5 class="m-0 fw-bold text-secondary">📄 {{ item.filename }}</h5>
-                        <span class="text-muted small">Lesson {{ loop.revindex }}</span>
+                        <div>
+                            <h5 class="m-0 fw-bold text-secondary">📄 {{ item.filename }}</h5>
+                            <span class="text-muted small">Lesson {{ loop.revindex }}</span>
+                        </div>
+
+                        <form action="{{ url_for('delete_dialogue', id=item.id) }}" method="POST" onsubmit="return confirm('⚠️ 确定要永久删除这个课件吗？');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm border-0" title="删除此课件">
+                                🗑️ 删除
+                            </button>
+                        </form>
                     </div>
 
                     <div class="card-body p-0">
