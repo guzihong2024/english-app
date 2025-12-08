@@ -93,6 +93,10 @@
         .bg-subject { background-color: #4facfe; background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%); }
         .bg-verb    { background-color: #ff0844; background-image: linear-gradient(to right, #ff0844 0%, #ffb199 100%); }
         .bg-object  { background-color: #43e97b; background-image: linear-gradient(to right, #43e97b 0%, #38f9d7 100%); }
+        
+        /* 新增：间接宾语和宾补的样式 */
+        .bg-io      { background: linear-gradient(to right, #f1c40f, #f39c12); }
+        .bg-comp    { background: linear-gradient(to right, #9b59b6, #8e44ad); }
 
         /* --- 页脚 --- */
         footer {
@@ -168,34 +172,73 @@
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed bg-white py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_{{ loop.index }}">
-                                        ✨ <strong>点击查看：核心语法结构分析</strong>
+                                        ✨ <strong>点击查看：核心语法结构分析 (全句解)</strong>
                                     </button>
                                 </h2>
                                 <div id="collapse_{{ loop.index }}" class="accordion-collapse collapse">
-                                    <div class="accordion-body bg-light">
-                                        {% if item.analysis and item.analysis.get('structure') %}
-                                            <div class="mb-2 text-muted small">第一句核心成分拆解：</div>
-                                            <div class="d-flex flex-wrap align-items-center gap-2">
-                                                {% if item.analysis.structure.subject %}
-                                                <span class="grammar-tag bg-subject">主语: {{ item.analysis.structure.subject }}</span>
-                                                {% endif %}
+                                    
+                                    <div class="accordion-body bg-light p-4">
+                                        
+                                        {% if item.analysis and item.analysis.get('sentences') %}
+                                            
+                                            {% for sentence in item.analysis.sentences %}
+                                            <div class="mb-4 pb-3 border-bottom" style="border-color: #e9ecef !important;">
                                                 
-                                                {% if item.analysis.structure.verb %}
-                                                <span class="grammar-tag bg-verb">谓语: {{ item.analysis.structure.verb }}</span>
-                                                {% endif %}
-                                                
-                                                {% if item.analysis.structure.object %}
-                                                <span class="grammar-tag bg-object">宾语: {{ item.analysis.structure.object }}</span>
+                                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                                    <div class="d-flex">
+                                                        <span class="badge bg-secondary rounded-pill me-2 mt-1" style="height: fit-content;">{{ loop.index }}</span>
+                                                        <span class="fw-bold text-dark" style="font-family: 'Georgia', serif; font-size: 1.1rem;">
+                                                            {{ sentence.english }}
+                                                        </span>
+                                                    </div>
+                                                    {% if sentence.type %}
+                                                    <span class="badge bg-dark text-white ms-2">{{ sentence.type }}</span>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="text-muted small mb-3 ps-5">
+                                                    {{ sentence.chinese }}
+                                                </div>
+
+                                                <div class="ps-5 d-flex flex-wrap align-items-center gap-2">
+                                                    
+                                                    {% if sentence.parts.subject %}
+                                                    <span class="grammar-tag bg-subject">主: {{ sentence.parts.subject }}</span>
+                                                    {% endif %}
+                                                    
+                                                    {% if sentence.parts.verb %}
+                                                    <span class="grammar-tag bg-verb">谓: {{ sentence.parts.verb }}</span>
+                                                    {% endif %}
+                                                    
+                                                    {% if sentence.parts.object %}
+                                                    <span class="grammar-tag bg-object">宾/表: {{ sentence.parts.object }}</span>
+                                                    {% endif %}
+
+                                                    {% if sentence.parts.indirect_object %}
+                                                    <span class="grammar-tag bg-io">间宾: {{ sentence.parts.indirect_object }}</span>
+                                                    {% endif %}
+
+                                                    {% if sentence.parts.complement %}
+                                                    <span class="grammar-tag bg-comp">宾补: {{ sentence.parts.complement }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+
+                                        {% else %}
+                                            <div class="text-center py-3 text-muted">
+                                                <p>⏳ 暂无逐句分析数据，请确保 AI 已重新生成该内容的 Sentences 列表。</p>
+                                                {% if item.analysis and item.analysis.get('structure') %}
+                                                    <p class="small text-secondary">(检测到旧版单句数据，请重新提交文档生成)</p>
                                                 {% endif %}
                                             </div>
-                                        {% else %}
-                                            <p class="text-muted small mb-0">暂无语法数据。</p>
                                         {% endif %}
                                     </div>
-                                </div>
+                                    </div>
                             </div>
                         </div>
-                    </div> </div>
+                    </div> 
+                </div>
             </div>
         </div>
         {% endfor %}

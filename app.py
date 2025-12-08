@@ -63,11 +63,11 @@ def init_db():
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS dialogues
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                  english_text TEXT, 
-                  audio_path TEXT, 
-                  grammar_json TEXT,
-                  source_filename TEXT,
-                  translator_source TEXT)''')
+                 english_text TEXT, 
+                 audio_path TEXT, 
+                 grammar_json TEXT,
+                 source_filename TEXT,
+                 translator_source TEXT)''')
     conn.commit()
     conn.close()
 
@@ -111,50 +111,69 @@ def external_translate(text, source='google_free'):
         return None
     return None
 
+# 🔥🔥🔥 重点修改区域：新的 AI 分析函数 🔥🔥🔥
 def analyze_text_with_gemini(text):
     if not model:
-        return json.dumps({"translation": "API Key配置错误", "structure": {}})
+        return json.dumps({"translation": "API Key配置错误", "sentences": []})
 
-    short_text = text[:1500] 
-    external_trans = external_translate(short_text, source=TRANSLATION_SOURCE)
+    # 稍微增加长度限制，以便分析更多句子
+    short_text = text[:3000] 
     
-    if external_trans:
-        prompt = f"""
-        分析这段英语文本: "{short_text}..."
-        用户已提供标准翻译: "{external_trans}"
-        任务：
-        1. 必须直接使用用户提供的翻译作为 'translation' 字段。
-        2. 提取第一句的语法结构 (主谓宾)。
-        3. 返回纯 JSON:
-        {{
-            "translation": "{external_trans}",
-            "structure": {{ "subject": "...", "verb": "...", "object": "..." }}
-        }}
-        """
-    else:
-        prompt = f"""
-        分析这段英语文本: "{short_text}..."
-        任务：
-        1. 翻译成中文。
-        2. 提取第一句语法结构。
-        3. 返回纯 JSON:
-        {{
-            "translation": "中文大意...",
-            "structure": {{ "subject": "...", "verb": "...", "object": "..." }}
-        }}
-        """
+    # 1. 先获取全文翻译（作为参考）
+    external_trans = external_translate(short_text, source=TRANSLATION_SOURCE)
+    if not external_trans:
+        external_trans = "翻译服务暂时不可用"
+
+    # 2. 构造新的 Prompt，强制要求返回 sentences 列表
+    prompt = f"""
+    Role: You are an expert English linguist and developer.
+    Task: Analyze the following English text sentence by sentence.
+
+    English Text: "{short_text}"
+    Reference Translation: "{external_trans}"
+
+    Instructions:
+    1. Split the text into individual sentences.
+    2. For EACH sentence, provide:
+       - 'english': The original English sentence.
+       - 'chinese': Translate this specific sentence into Chinese.
+       - 'type': Identify the sentence structure type (SV, SVO, SVC, SVOO, SVOC).
+       - 'parts': Break down into 'subject', 'verb', 'object', 'indirect_object' (if applicable), 'complement' (if applicable). Use the actual words from the sentence.
+
+    Output Format:
+    You must strictly return a JSON object with this structure:
+    {{
+        "translation": "{external_trans}",
+        "sentences": [
+            {{
+                "english": "Sentence 1...",
+                "chinese": "Chinese translation...",
+                "type": "SVO",
+                "parts": {{
+                    "subject": "...",
+                    "verb": "...",
+                    "object": "...",
+                    "indirect_object": "",
+                    "complement": ""
+                }}
+            }},
+            ...
+        ]
+    }}
+    """
     
     try:
-        print("🔄 正在请求 AI 分析语法...")
+        print("🔄 正在请求 AI 进行全文档逐句拆解...")
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
         print(f"❌ AI Error: {e}")
         safe_fallback = {
             "translation": f"AI 连接失败: {str(e)[:50]}",
-            "structure": {"subject": None, "verb": None, "object": None}
+            "sentences": [] # 返回空列表防止前端报错
         }
         return json.dumps(safe_fallback)
+# 🔥🔥🔥 修改结束 🔥🔥🔥
 
 @app.route('/')
 def home():
@@ -171,14 +190,20 @@ def home():
     for r in rows:
         try:
             analysis = json.loads(r[3])
-            if 'structure' not in analysis: analysis['structure'] = {}
+            # 兼容性处理：如果老数据没有 sentences 字段，给一个空的
+            if 'sentences' not in analysis: 
+                analysis['sentences'] = []
+                # 尝试保留旧的结构以便显示
+                if 'structure' in analysis:
+                    # 可以选择把旧结构伪装成新结构，或者就留着让前端的兼容代码处理
+                    pass 
         except:
-            analysis = {"translation": "数据解析错误", "structure": {}}
+            analysis = {"translation": "数据解析错误", "sentences": []}
         
         translator = r[5] if len(r) > 5 else 'unknown'
         
         dialogues.append({
-            "id": r[0],     # 🔥 关键修复：必须添加 ID，否则无法删除
+            "id": r[0],
             "text": r[1],
             "audio": r[2],
             "analysis": analysis,
@@ -203,7 +228,6 @@ def logout():
     session.pop('is_admin', None)
     return redirect(url_for('home'))
 
-# ========= 🗑️ 删除功能 =========
 @app.route('/delete/<int:id>', methods=['POST'])
 def delete_dialogue(id):
     if not session.get('is_admin'):
@@ -212,7 +236,6 @@ def delete_dialogue(id):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     
-    # 1. 查找文件路径以便物理删除
     c.execute("SELECT audio_path, source_filename FROM dialogues WHERE id=?", (id,))
     row = c.fetchone()
     
@@ -228,14 +251,12 @@ def delete_dialogue(id):
         except Exception as e:
             print(f"⚠️ 文件删除警告: {e}")
 
-        # 2. 删除数据库记录
         c.execute("DELETE FROM dialogues WHERE id=?", (id,))
         conn.commit()
         flash('🗑️ 课件已删除！')
     
     conn.close()
     return redirect(url_for('home'))
-# ==============================
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
@@ -255,6 +276,7 @@ def admin():
             pdf_file.save(pdf_path)
 
             extracted_text = extract_text_from_pdf(pdf_path)
+            # 这里会调用新的函数，生成包含 sentences 列表的 JSON
             grammar_data = analyze_text_with_gemini(extracted_text)
 
             conn = sqlite3.connect(DB_PATH)
@@ -265,12 +287,11 @@ def admin():
             conn.commit()
             conn.close()
 
-            flash(f'✅ 发布成功！翻译使用: {current_source}')
+            flash(f'✅ 发布成功！已生成全文档逐句分析。')
             return redirect(url_for('admin'))
 
     return render_template('admin.html')
 
-# ========= 🚑 急救路由 (修复数据库) =========
 @app.route('/fix-db')
 def fix_db():
     try:
@@ -278,7 +299,6 @@ def fix_db():
         return f"<h1>✅ 数据库表已修复！</h1><p>路径: {DB_PATH}</p><a href='/'>返回首页</a>"
     except Exception as e:
         return f"<h1>❌ 修复失败: {e}</h1>"
-# ==========================================
 
 if __name__ == '__main__':
     init_db()
